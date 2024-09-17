@@ -1,6 +1,13 @@
 const { StatusCodes } = require("http-status-codes");
 const mongoose = require("mongoose");
+const OpenAI = require("openai");
+
+const axios = require("axios");
 const Job = require("../models/Job");
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 const getJobs = async (req, res) => {
   const {
@@ -14,8 +21,9 @@ const getJobs = async (req, res) => {
     minSalary,
     maxSalary,
   } = req.query;
+  const { userId } = req.user;
 
-  const filters = {};
+  const filters = { createdBy: userId };
 
   if (company) {
     filters.company = company;
@@ -252,10 +260,45 @@ const deleteJob = async (req, res) => {
   }
 };
 
+const generateJobDescription = async (req, res) => {
+  const { title, company } = req.body;
+  console.log(title,"the title")
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful assistant that generates job descriptions using only title and company name.",
+        },
+        {
+          role: "user",
+          content: `Generate a simple job description for a ${title} position at ${company}. just using 2 data only`,
+        },
+      ],
+      max_tokens: 150,
+    });
+
+    const jobDescription = response?.choices?.[0]?.message?.content;
+    res.status(StatusCodes.OK).json({ description: jobDescription });
+  } catch (error) {
+    console.error(
+      "Error generating job description:",
+      error.response ? error.response.data : error.message
+    );
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Failed to generate job description" });
+  }
+};
+
 module.exports = {
   getJobs,
   createJob,
   updateJob,
   deleteJob,
   listAllJobs,
+  generateJobDescription,
 };
