@@ -112,3 +112,46 @@ export const deleteJob = (id) => async (dispatch, getState) => {
     console.error("Error deleting job:", error);
   }
 };
+
+export const generateDescription =
+  ({title, company}) => async (dispatch, getState) => {
+    try {
+      const {
+        auth: { token },
+      } = getState();
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      };
+
+      const body = {
+        title,
+        company,
+      };
+
+      const { data } = await axios.post(
+        "http://localhost:4000/api/jobs/generate-description",
+        body,
+        config
+      );
+
+      dispatch({
+        type: "GENERATE_DESCRIPTION_SUCCESS",
+        payload: data,
+      });
+      
+      return data;
+
+    } catch (error) {
+      console.error("Error generating description:", error);
+      dispatch({
+        type: "GENERATE_DESCRIPTION_FAILURE",
+        payload: error.message,
+      });
+
+      throw error;
+    }
+  };

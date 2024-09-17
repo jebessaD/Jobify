@@ -13,6 +13,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  CircularProgress,
 } from "@mui/material";
 import {
   fetchCompanies,
@@ -23,12 +24,13 @@ import {
 
 const CompanyManagement = () => {
   const dispatch = useDispatch();
-  const { companies } = useSelector((state) => state);
+  const { companies, loading } = useSelector((state) => state);
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [companyData, setCompanyData] = useState({ name: "", address: "" });
   const [file, setFile] = useState(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCompanies());
@@ -58,7 +60,8 @@ const CompanyManagement = () => {
     setFile(selectedFile);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setIsLoading(true);
     const formData = new FormData();
     formData.append("name", companyData.name);
     formData.append("address", companyData.address);
@@ -67,19 +70,19 @@ const CompanyManagement = () => {
     }
 
     if (isEditing) {
-      dispatch(updateCompany(selectedCompanyId, formData));
-      dispatch(fetchCompanies());
+      await dispatch(updateCompany(selectedCompanyId, formData));
     } else {
-      dispatch(createCompany(formData));
-      dispatch(fetchCompanies());
+      await dispatch(createCompany(formData));
     }
-
+    await dispatch(fetchCompanies());
+    setIsLoading(false);
     handleClose();
   };
 
-  const handleDeleteCompany = (id) => {
-    dispatch(deleteCompany(id));
-    dispatch(fetchCompanies());
+  const handleDeleteCompany = async (id) => {
+    setIsLoading(true);
+    await dispatch(deleteCompany(id));
+    setIsLoading(false);
   };
 
   return (
@@ -108,7 +111,7 @@ const CompanyManagement = () => {
             value={companyData.address}
             onChange={handleInputChange}
           />
-          {/* File Upload */}
+
           <input
             type="file"
             onChange={handleFileChange}
@@ -119,52 +122,61 @@ const CompanyManagement = () => {
           <Button onClick={handleClose} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} color="primary">
-            {isEditing ? "Update" : "Add"}
+          <Button onClick={handleSubmit} color="primary" disabled={isLoading}>
+            {isLoading ? (
+              <CircularProgress size={24} />
+            ) : isEditing ? (
+              "Update"
+            ) : (
+              "Add"
+            )}
           </Button>
         </DialogActions>
       </Dialog>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Logo</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Address</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {companies?.loading && <div>Loading...</div>}
-          {companies?.companies?.companies?.map((company) => (
-            <TableRow key={company._id}>
-              <TableCell>
-                <img
-                  src={`${company.logo}`}
-                  alt="logo"
-                  style={{
-                    width: "50px",
-                    height: "50px",
-                    borderRadius: "100%",
-                  }}
-                />
-              </TableCell>
-              <TableCell>{company.name}</TableCell>
-              <TableCell>{company.address}</TableCell>
-              <TableCell>
-                <Button onClick={() => handleOpen(company)} color="primary">
-                  Edit
-                </Button>
-                <Button
-                  onClick={() => handleDeleteCompany(company._id)}
-                  color="secondary"
-                >
-                  Delete
-                </Button>
-              </TableCell>
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Logo</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Address</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {companies?.companies.companies?.map((company) => (
+              <TableRow key={company._id}>
+                <TableCell>
+                  <img
+                    src={`${company.logo}`}
+                    alt="logo"
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "100%",
+                    }}
+                  />
+                </TableCell>
+                <TableCell>{company.name}</TableCell>
+                <TableCell>{company.address}</TableCell>
+                <TableCell>
+                  <Button onClick={() => handleOpen(company)} color="primary">
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteCompany(company._id)}
+                    color="secondary"
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </Container>
   );
 };

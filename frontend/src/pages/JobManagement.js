@@ -5,6 +5,7 @@ import {
   createJob,
   updateJob,
   deleteJob,
+  generateDescription,
 } from "../actions/jobActions";
 import { fetchCompanies } from "../actions/companyActions";
 import {
@@ -24,7 +25,7 @@ import {
   Select,
   FormControl,
   InputLabel,
-  Pagination, // Import Pagination
+  Pagination,
 } from "@mui/material";
 
 const JobManagement = () => {
@@ -40,6 +41,7 @@ const JobManagement = () => {
     location: "",
     company: "",
   });
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -48,7 +50,7 @@ const JobManagement = () => {
     sortBy: "",
     sortOrder: "asc",
     page: 1,
-    limit: 5, 
+    limit: 5,
   });
 
   useEffect(() => {
@@ -119,19 +121,39 @@ const JobManagement = () => {
   const handlePageChange = (event, value) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
-      page: value, // Set the new page
+      page: value,
     }));
+  };
+
+  const handleGenerateDescription = async () => {
+    setIsGenerating(true);
+    const company = companies.companies.find((c) => c._id === jobData.company);
+    const companyName = company ? company.name : "";
+    console.log(companyName, "hello,", jobData.title, "comapny name");
+    try {
+      const { description } = await dispatch(
+        generateDescription({ title: jobData.title, company: companyName })
+      );
+      console.log(description, "the descsss");
+      setJobData((prevData) => ({
+        ...prevData,
+        description,
+      }));
+    } catch (error) {
+      console.error("Failed to generate description", error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
     <Container>
       <h2>Job Management</h2>
-      <Button onClick={handleOpen} variant="contained" color="primary">
+      <Button sx={{marginBottom:"20px"}} onClick={handleOpen} variant="contained" color="primary">
         Add Job
       </Button>
 
-      {/* Search and Filter Inputs */}
-      <div style={{ marginBottom: "20px" }}>
+      <div style={{ marginY: "20px" }}>
         <TextField
           label="Search"
           name="search"
@@ -206,14 +228,41 @@ const JobManagement = () => {
             value={jobData.title}
             onChange={handleInputChange}
           />
+
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Company</InputLabel>
+            <Select
+              name="company"
+              value={jobData.company}
+              onChange={handleInputChange}
+            >
+              {companies.companies?.map((company) => (
+                <MenuItem key={company._id} value={company._id}>
+                  {company.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             margin="dense"
             label="Description"
             name="description"
             fullWidth
+            multiline
+            minRows={4}
             value={jobData.description}
             onChange={handleInputChange}
+            disabled
           />
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={handleGenerateDescription}
+            style={{ marginTop: "10px" }}
+            disabled={isGenerating}
+          >
+            {isGenerating ? "Generating..." : "Generate Description"}
+          </Button>
           <TextField
             margin="dense"
             label="Salary"
@@ -231,20 +280,6 @@ const JobManagement = () => {
             value={jobData.location}
             onChange={handleInputChange}
           />
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Company</InputLabel>
-            <Select
-              name="company"
-              value={jobData.company}
-              onChange={handleInputChange}
-            >
-              {companies.companies?.map((company) => (
-                <MenuItem key={company._id} value={company._id}>
-                  {company.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="secondary">
