@@ -6,6 +6,7 @@ const {
   updateJob,
   deleteJob,
   listAllJobs,
+  generateJobDescription,
 } = require("../controllers/Job");
 
 const router = express.Router();
@@ -15,6 +16,8 @@ router.post("", isAdmin, createJob);
 router.get("", isAdmin, getJobs);
 
 router.get("/all", listAllJobs);
+
+router.post("/generate-description", isAdmin, generateJobDescription);
 
 router.patch("/:id", isAdmin, updateJob);
 

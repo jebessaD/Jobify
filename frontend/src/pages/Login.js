@@ -12,6 +12,8 @@ const Login = () => {
     const navigate = useNavigate();
     const { user, isLoading, error: authError } = useSelector((state) => state.auth);
 
+
+    console.log(user,"the user exist")
     useEffect(() => {
         if (user) {
             if (user.role === "super-admin") {

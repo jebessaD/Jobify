@@ -11,8 +11,6 @@ const Dashboard = lazy(() => import("../pages/Dashboard"));
 const AppRoutes = () => {
   const { user } = useSelector((state) => state.auth);
 
-  console.log(user, "hello world");
-
   return (
     <Router>
       <Suspense fallback={<div>Loading...</div>}>

@@ -10,6 +10,7 @@ const CLOUDINARY_URL = process.env.CLOUDINARY_URL;
 const API_SECRET = process.env.API_SECRET;
 const API_KEY = process.env.API_KEY;
 const CLOUD_NAME = process.env.CLOUD_NAME;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 module.exports = {
   CLOUD_NAME,

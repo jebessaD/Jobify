@@ -28,13 +28,15 @@ export default function authReducer(state = initialState, action) {
       };
     case LOGIN_FAIL:
     case LOGOUT:
-
       localStorage.setItem("token", null);
+      localStorage.removeItem("token");
       localStorage.setItem("user", null);
+      localStorage.removeItem("user");
       return {
         ...state,
+        user:null,
         token: null,
-        isAuthenticated: false,
+        isAuthenticated: null,
         loading: false,
       };
     default:
